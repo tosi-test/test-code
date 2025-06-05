@@ -1,6 +1,6 @@
 # Kanban Board
 
-This project is a simple drag-and-drop Kanban board built with React, TypeScript and Vite. UI components are styled with Tailwind CSS using shadcn conventions.
+This project is a simple drag-and-drop Kanban board built with React, TypeScript and Vite. Drag-and-drop interactions are powered by [dnd-kit](https://dndkit.com/). UI components are styled with Tailwind CSS using shadcn conventions.
 
 ## Available Scripts
 
