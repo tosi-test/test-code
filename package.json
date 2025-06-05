@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/build.js",
     "preview": "vite preview"
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@dnd-kit/core": "^6.0.6",
+    "@dnd-kit/utilities": "^3.2.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",

@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import { Button } from './components/ui/button';
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Task {
   id: string;
@@ -18,44 +25,67 @@ const initialBoard: Column[] = [
   { id: 'done', title: 'Done', tasks: [] },
 ];
 
+function TaskItem({ task, columnId }: { task: Task; columnId: string }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `${columnId}-${task.id}`,
+    data: { columnId, taskId: task.id },
+  });
+  const style = transform
+    ? { transform: CSS.Translate.toString(transform) }
+    : undefined;
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      style={style}
+      className="cursor-grab rounded bg-white p-2 shadow"
+    >
+      {task.text}
+    </div>
+  );
+}
+
+function ColumnContainer({
+  column,
+  children,
+}: {
+  column: Column;
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({ id: column.id });
+  return (
+    <div ref={setNodeRef} className="flex-1 rounded border bg-gray-50 p-2">
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   const [board, setBoard] = useState<Column[]>(initialBoard);
   const [newTaskId, setNewTaskId] = useState(2);
 
-  const handleDragStart = (
-    e: React.DragEvent<HTMLDivElement>,
-    columnId: string,
-    taskId: string
-  ) => {
-    e.dataTransfer.setData('text/plain', JSON.stringify({ columnId, taskId }));
-  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const sourceColumnId = active.data.current?.columnId as string | undefined;
+    const taskId = active.data.current?.taskId as string | undefined;
+    const targetColumnId = over.id as string;
+    if (!sourceColumnId || !taskId) return;
+    if (sourceColumnId === targetColumnId) return;
 
-  const handleDrop = (
-    e: React.DragEvent<HTMLDivElement>,
-    targetColumnId: string
-  ) => {
-    e.preventDefault();
-    const data = JSON.parse(e.dataTransfer.getData('text/plain')) as {
-      columnId: string;
-      taskId: string;
-    };
-    if (!data) return;
     setBoard((prev) => {
-      const sourceColumn = prev.find((c) => c.id === data.columnId);
+      const sourceColumn = prev.find((c) => c.id === sourceColumnId);
       const targetColumn = prev.find((c) => c.id === targetColumnId);
       if (!sourceColumn || !targetColumn) return prev;
 
-      const taskIndex = sourceColumn.tasks.findIndex((t) => t.id === data.taskId);
+      const taskIndex = sourceColumn.tasks.findIndex((t) => t.id === taskId);
       if (taskIndex === -1) return prev;
 
       const [task] = sourceColumn.tasks.splice(taskIndex, 1);
       targetColumn.tasks.push(task);
       return [...prev];
     });
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
   };
 
   const addTask = () => {
@@ -69,32 +99,24 @@ export default function App() {
   };
 
   return (
-    <div className="flex gap-4 p-4">
-      {board.map((column) => (
-        <div
-          key={column.id}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, column.id)}
-          className="flex-1 rounded border bg-gray-50 p-2"
-        >
-          <h2 className="mb-2 text-lg font-bold">{column.title}</h2>
-          <div className="space-y-2">
-            {column.tasks.map((task) => (
-              <div
-                key={task.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, column.id, task.id)}
-                className="cursor-grab rounded bg-white p-2 shadow"
-              >
-                {task.text}
-              </div>
-            ))}
-            {column.id === 'todo' && (
-              <Button onClick={addTask} className="w-full">Add Task</Button>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 p-4">
+        {board.map((column) => (
+          <ColumnContainer key={column.id} column={column}>
+            <h2 className="mb-2 text-lg font-bold">{column.title}</h2>
+            <div className="space-y-2">
+              {column.tasks.map((task) => (
+                <TaskItem key={task.id} task={task} columnId={column.id} />
+              ))}
+              {column.id === 'todo' && (
+                <Button onClick={addTask} className="w-full">
+                  Add Task
+                </Button>
+              )}
+            </div>
+          </ColumnContainer>
+        ))}
+      </div>
+    </DndContext>
   );
 }
