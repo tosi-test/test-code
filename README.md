@@ -10,4 +10,4 @@ This project is a simple drag-and-drop Kanban board built with React, TypeScript
 
 ## Notes
 
-Dependencies are listed in `package.json`, but they may not be installed in this environment.
+Dependencies are listed in `package.json`, but they may not be installed in this environment. Run `npm install` before using any scripts so that modules like `@dnd-kit/core` are available.
